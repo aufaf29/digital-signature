@@ -37,6 +37,12 @@ def upload_signing():
     signature_ = algorithms.SHA256().compute(signing_file)
     
     pub_key = key_1.get("1.0", "end-1c")
+    
+    if(pub_key == ""):
+        signature.delete('1.0', END)
+        signature.insert(END, "Please Write or Upload Private Key First!")
+        return False
+    
     public_key = pub_key.split("=\n")[:-1]
     public_key = {
         'y': public_key[0] + "=\n",
@@ -63,26 +69,33 @@ def upload_verify():
     found_signature = verify_file[loc_start + 4:loc_end]
     
     pri_key = key_2.get("1.0", "end-1c")
+    
+    if(pri_key == ""):
+        verify_result.delete('1.0', END)
+        verify_result.insert(END, "Please Write or Upload Public Key First!")
+        return False
+    
     private_key = pri_key.split("=\n")[:-1]
     private_key = {'x': private_key[0] + "=\n", 'p': private_key[1] + "=\n"}
 
-    decrypted = machine.decrypt_hex(found_signature, private_key)
+    try:
+        decrypted = machine.decrypt_hex(found_signature, private_key)
+    except:
+        verify_result.delete('1.0', END)
+        verify_result.insert(END, "NOT VERIFIED !!! FILE MAYBE CHANGED")
+        return False
     
     signature__ = algorithms.SHA256().compute(verify_file[:loc_start - 2])
     
-    print("==> From Signatured")
-    print(found_signature)
-    print("==> From Signatured Decrypted")
-    print(decrypted)
-    print("==> Recalculated")
-    print(signature__)
-    
     verify_result.delete('1.0', END)
+    
     if(decrypted == signature__):
-        verify_result.insert(END, "VERIFIED !!!")
+        verify_result.insert(END, "VERIFIED !!!" + "\n")
     else:
-        verify_result.insert(END, "NOT VERIFIED !!! FILE MAYBE CHANGED")
+        verify_result.insert(END, "NOT VERIFIED !!! FILE MAYBE CHANGED" + "\n")
         
+    verify_result.insert(END, "==> Signature\t: " + decrypted + "\n")
+    verify_result.insert(END, "==> Recalculate\t: " + signature__)
         
 def generate_key():
     pub_key, pri_key = machine.create_key(int(key_size.get()))
