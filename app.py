@@ -79,6 +79,17 @@ def sign(filename):
         file.write("<\ds>")
 
 
+def remove_sign(filename):
+    with open(filename) as file:
+        f = file.read()
+        loc_start = f.find("<ds>")
+        if (loc_start == -1):
+            return
+
+    with open(filename, 'w') as file:
+        file.write(f[:loc_start - 2])
+
+
 def verify(filename):
     with open(filename) as file:
         f = file.read()
