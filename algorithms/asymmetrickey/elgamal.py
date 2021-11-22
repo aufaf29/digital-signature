@@ -91,7 +91,7 @@ class ElGamalMachine:
         public_key = { 'y': public_key[0] + "=\n", 'g': public_key[1] + "=\n", 'p': public_key[2] + "=\n" }
 
         encrypted = self.encrypt(message, public_key)
-        return Utils.encrypted
+        return encrypted
 
     def decrypt_full(self, encrypted, pri_key):
         private_key = pri_key.split("=\n")[:-1]
@@ -112,6 +112,60 @@ class ElGamalMachine:
         for i in range(0, len(encrypted), 2):
             a = Utils.b64_to_dec(encrypted[i] + '=\n')
             b = Utils.b64_to_dec(encrypted[i+1] + '=\n')
+            encrypted_paired.append({ 'a': a, 'b': b })
+
+        message = ''
+        for m in encrypted_paired:
+            message += chr(self.elgamal.decrypt(m, p_key))
+        return message
+    
+
+    def encrypt_hex(self, message, public_key):
+        y = Utils.b64_to_dec(public_key['y'])
+        g = Utils.b64_to_dec(public_key['g'])
+        p = Utils.b64_to_dec(public_key['p'])
+
+        p_key = { 'y': y, 'g': g, 'p': p }
+
+        encrypted = ''
+        for i in range(len(message)):
+            m = message[i]
+            k = random.randint(1, p-2)
+            res = self.elgamal.encrypt(ord(m), k, p_key)
+            a = Utils.dec_to_hex_special(res['a'])
+            b = Utils.dec_to_hex_special(res['b'])
+            encrypted += a + "x" + b
+            if(i < len(message) - 1):
+                encrypted += "x"
+        return encrypted
+
+    def encrypt_hex_full(self, message, pub_key):
+        public_key = pub_key.split("=\n")[:-1]
+        public_key = { 'y': public_key[0] + "=\n", 'g': public_key[1] + "=\n", 'p': public_key[2] + "=\n" }
+
+        encrypted = self.encrypt_hex(message, public_key)
+        return encrypted
+
+    def decrypt_hex_full(self, encrypted, pri_key):
+        private_key = pri_key.split("=\n")[:-1]
+        private_key = { 'x': private_key[0] + "=\n", 'p': private_key[1] + "=\n" }
+        
+        decrypted = self.decrypt_hex(encrypted, private_key)
+        return decrypted
+
+
+    def decrypt_hex(self, encrypted, private_key):
+        x = Utils.b64_to_dec(private_key['x'])
+        p = Utils.b64_to_dec(private_key['p'])
+
+        p_key = { 'x': x, 'p': p }
+        
+        encrypted = encrypted.split('x')
+        print(encrypted)
+        encrypted_paired = []
+        for i in range(0, len(encrypted), 2):
+            a = Utils.hex_to_dec(encrypted[i])
+            b = Utils.hex_to_dec(encrypted[i+1])
             encrypted_paired.append({ 'a': a, 'b': b })
 
         message = ''

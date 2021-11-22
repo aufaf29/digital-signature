@@ -50,3 +50,7 @@ class Utils:
             if (pow(x, 2, p) == n):
                 points.append(x)
         return points
+    
+    def dec_to_hex_special(dec):
+        hexa = hex(dec)
+        return hexa[2:]

@@ -38,55 +38,72 @@ def generate_key():
     key_2.delete('1.0', END)
     key_2.insert(END, str(pri_key))
 
+
 def encrypt():
     pub_key = key_1.get("1.0", "end-1c")
     public_key = pub_key.split("=\n")[:-1]
-    public_key = { 'y': public_key[0] + "=\n", 'g': public_key[1] + "=\n", 'p': public_key[2] + "=\n" }
-    
+    public_key = {
+        'y': public_key[0] + "=\n",
+        'g': public_key[1] + "=\n",
+        'p': public_key[2] + "=\n"
+    }
+
     plaintext_value = plaintext.get("1.0", "end-1c")
     plaintext.delete('1.0', END)
-    encrypted = machine.encrypt(plaintext_value, public_key)
+    encrypted = machine.encrypt_hex(plaintext_value, public_key)
 
     ciphertext.delete('1.0', END)
     ciphertext.insert(END, encrypted)
 
+
 def decrypt():
     pri_key = key_2.get("1.0", "end-1c")
     private_key = pri_key.split("=\n")[:-1]
-    private_key = { 'x': private_key[0] + "=\n", 'p': private_key[1] + "=\n" }
+    private_key = {'x': private_key[0] + "=\n", 'p': private_key[1] + "=\n"}
 
     ciphertext_value = ciphertext.get("1.0", "end-1c")
     ciphertext.delete('1.0', END)
-    decrypted = machine.decrypt(ciphertext_value, private_key)
+    decrypted = machine.decrypt_hex(ciphertext_value, private_key)
 
     plaintext.delete('1.0', END)
     plaintext.insert(END, decrypted)
-    
 
-def sign(filename, signature):
+
+def sign(filename):
+    with open(filename) as file:
+        signature = algorithms.SHA256().compute(file.read())
+
     with open(filename, 'a') as file:
         file.write("\n\n<ds>")
         file.write(signature)
         file.write("<\ds>")
 
 
-def verify(filename, signature):
+def verify(filename):
     with open(filename) as file:
         f = file.read()
-        loc_start = f.find("<ds>") + 4
+        loc_start = f.find("<ds>")
+        if (loc_start == -1):
+            return False
         loc_end = f.find("<\ds>")
 
-        found_signature = f[loc_start:loc_end]
+        found_signature = f[loc_start + 4:loc_end]
+        signature = algorithms.SHA256().compute(f[:loc_start - 2])
 
         return found_signature == signature
 
-      
-main_title = Label(text = "ElGamal Encryption")
 
-key_size = StringVar(root); key_size.set(key_size_option[2]);
+main_title = Label(text="Digital Signature")
+
+key_size = StringVar(root)
+key_size.set(key_size_option[2])
 key_size_dropdown = OptionMenu(root, key_size, *key_size_option)
 
-generate_key_button = Button(root, height = 2, width = 60, text ="Generate Key", command = lambda: generate_key())
+generate_key_button = Button(root,
+                             height=2,
+                             width=60,
+                             text="Generate Key",
+                             command=lambda: generate_key())
 
 
 key1_title = Label(text = "Private Key", pady=10)
@@ -124,7 +141,7 @@ key2_save.pack()
 key_2.pack()
 
 crypt_title.pack()
-  
+
 plaintext.pack()
 encrypt_button.pack()
 
