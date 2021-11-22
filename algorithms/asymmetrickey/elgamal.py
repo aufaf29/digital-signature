@@ -161,7 +161,6 @@ class ElGamalMachine:
         p_key = { 'x': x, 'p': p }
         
         encrypted = encrypted.split('x')
-        print(encrypted)
         encrypted_paired = []
         for i in range(0, len(encrypted), 2):
             a = Utils.hex_to_dec(encrypted[i])
