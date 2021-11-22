@@ -60,6 +60,17 @@ def sign(filename, signature):
         file.write("<\ds>")
 
 
+def verify(filename, signature):
+    with open(filename) as file:
+        f = file.read()
+        loc_start = f.find("<ds>") + 4
+        loc_end = f.find("<\ds>")
+
+        found_signature = f[loc_start:loc_end]
+
+        return found_signature == signature
+
+
 key_size = StringVar(tab1)
 key_size.set(key_size_option[2])
 key_size_dropdown = OptionMenu(tab1, key_size, *key_size_option)
