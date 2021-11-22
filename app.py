@@ -63,6 +63,8 @@ def upload_verify():
     verify_file = file.read()
     loc_start = verify_file.find("<ds>")
     if (loc_start == -1):
+        verify_result.delete('1.0', END)
+        verify_result.insert(END, "No signature found in your file!")
         return False
     loc_end = verify_file.find("<\ds>")
 
