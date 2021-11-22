@@ -4,9 +4,6 @@ from .ecc import (
 from .elgamal import (
     ElGamal, ElGamalMachine
 )
-from .paillier import (
-    Paillier,
-)
 from .rsa import (
     RSA,
 )
