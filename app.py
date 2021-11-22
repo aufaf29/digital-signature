@@ -53,6 +53,13 @@ def decrypt():
     plaintext.insert(END, decrypted)
 
 
+def sign(filename, signature):
+    with open(filename, 'a') as file:
+        file.write("\n\n<ds>")
+        file.write(signature)
+        file.write("<\ds>")
+
+
 key_size = StringVar(tab1)
 key_size.set(key_size_option[2])
 key_size_dropdown = OptionMenu(tab1, key_size, *key_size_option)
