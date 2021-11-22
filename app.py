@@ -3,8 +3,6 @@ import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
 
-
-
 import algorithms
 
 machine = algorithms.ElGamalMachine()
@@ -23,9 +21,7 @@ def upload_file(event=None):
 def save_file():
     file = filedialog.asksaveasfile(initialfile = 'Untitled.txt', defaultextension=".txt", filetypes=[("All Files","*.*"),("Text Documents","*.txt")])
     print('selected:', file)
-
-    
-    
+      
 def generate_key():
     pub_key, pri_key = machine.create_key(int(key_size.get()))
 
