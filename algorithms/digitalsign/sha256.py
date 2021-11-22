@@ -75,104 +75,77 @@ class SHA256:
     def preprocessMessage(self, message):
         # translate message into bits
         bits = self.translate(message)
-
-        # message length
         length = len(bits)
 
         # get length in bits  of message (64 bit block)
         message_len = [int(b) for b in bin(length)[2:].zfill(64)]
-
-        # append single 1
         bits.append(1)
 
-        #if length smaller than 448 handle block individually otherwise
-        #if exactly 448 then add single 1 and add up to 1024 and if longer than 448
-        #create multiple of 512 - 64 bits for the length at the end of the message (big endian)
+        # if length smaller than 448 handle block individually otherwise
+        # if exactly 448 then add single 1 and add up to 1024 and if longer than 448
+        # create multiple of 512 - 64 bits for the length at the end of the message (big endian)
         if length < 448:
-            #fill zeros little endian wise
             bits = self.fillZeros(bits, 448, 'LE')
-            #add the 64 bits representing the length of the message
             bits = bits + message_len
-            #return as list
             return [bits]
         elif length == 448:
-            #moves to next message block - total length = 1024
             bits = self.fillZeros(bits, 1024, 'LE')
-            #replace the last 64 bits of the multiple of 512 with the original message length
             bits[-64:] = message_len
-            #returns it in 512 bit chunks
             return self.chunker(bits, 512)
         else:
-            # loop until multiple of 512 if message length exceeds 448 bits
             while len(bits) % 512 != 0:
                 bits.append(0)
-            #replace the last 64 bits of the multiple of 512 with the original message length
             bits[-64:] = message_len
         #returns it in 512 bit chunks
         return self.chunker(bits, 512)
 
-    #truth condition is integer 1
     def isTrue(self, x):
         return x == 1
 
-    #simple if
     def if_(self, i, y, z):
         return y if self.isTrue(i) else z
 
-    #and - both arguments need to be true
     def and_(self, i, j):
         return self.if_(i, j, 0)
 
     def AND(self, i, j):
         return [self.and_(ia, ja) for ia, ja in zip(i, j)]
 
-    #simply negates argument
     def not_(self, i):
         return self.if_(i, 0, 1)
 
     def NOT(self, i):
         return [self.not_(x) for x in i]
 
-    #retrun true if either i or j is true but not both at the same time
     def xor(self, i, j):
         return self.if_(i, self.not_(j), j)
 
     def XOR(self, i, j):
         return [self.xor(ia, ja) for ia, ja in zip(i, j)]
 
-    #if number of truth values is odd then return true
-    def xorxor(self, i, j, l):
+    def doublexor(self, i, j, l):
         return self.xor(i, self.xor(j, l))
 
-    def XORXOR(self, i, j, l):
-        return [self.xorxor(ia, ja, la) for ia, ja, la, in zip(i, j, l)]
+    def DOUBLEXOR(self, i, j, l):
+        return [self.doublexor(ia, ja, la) for ia, ja, la, in zip(i, j, l)]
 
-    #get the majority of results, i.e., if 2 or more of three values are the same
     def maj(self, i, j, k):
         return max([i, j], key=[i, j, k].count)
 
-    # rotate right
     def rotr(self, x, n):
         return x[-n:] + x[:-n]
 
-    # shift right
     def shr(self, x, n):
         return n * [0] + x[:-n]
 
     #full binary adder
     def add(self, i, j):
-        #takes to lists of binaries and adds them
         length = len(i)
         sums = list(range(length))
-        #initial input needs an carry over bit as 0
         c = 0
         for x in range(length - 1, -1, -1):
-            #add the inout bits with a double xor gate
-            sums[x] = self.xorxor(i[x], j[x], c)
-            #carry over bit is equal the most represented, e.g., output = 0,1,0
-            # then 0 is the carry over bit
+            sums[x] = self.doublexor(i[x], j[x], c)
             c = self.maj(i[x], j[x], c)
-        #returns list of bits
         return sums
 
     def compute(self, msg):
@@ -184,10 +157,10 @@ class SHA256:
             for _ in range(48):
                 w.append(32 * [0])
             for i in range(16, 64):
-                s0 = self.XORXOR(self.rotr(w[i - 15], 7),
+                s0 = self.DOUBLEXOR(self.rotr(w[i - 15], 7),
                                  self.rotr(w[i - 15], 18),
                                  self.shr(w[i - 15], 3))
-                s1 = self.XORXOR(self.rotr(w[i - 2], 17),
+                s1 = self.DOUBLEXOR(self.rotr(w[i - 2], 17),
                                  self.rotr(w[i - 2], 19),
                                  self.shr(w[i - 2], 10))
                 w[i] = self.add(self.add(self.add(w[i - 16], s0), w[i - 7]),
@@ -201,14 +174,14 @@ class SHA256:
             g = h6
             h = h7
             for j in range(64):
-                S1 = self.XORXOR(self.rotr(e, 6), self.rotr(e, 11),
+                S1 = self.DOUBLEXOR(self.rotr(e, 6), self.rotr(e, 11),
                                  self.rotr(e, 25))
                 ch = self.XOR(self.AND(e, f), self.AND(self.NOT(e), g))
                 temp1 = self.add(self.add(self.add(self.add(h, S1), ch), k[j]),
                                  w[j])
-                S0 = self.XORXOR(self.rotr(a, 2), self.rotr(a, 13),
+                S0 = self.DOUBLEXOR(self.rotr(a, 2), self.rotr(a, 13),
                                  self.rotr(a, 22))
-                m = self.XORXOR(self.AND(a, b), self.AND(a, c), self.AND(b, c))
+                m = self.DOUBLEXOR(self.AND(a, b), self.AND(a, c), self.AND(b, c))
                 temp2 = self.add(S0, m)
                 h = g
                 g = f
