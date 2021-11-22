@@ -3,8 +3,6 @@ import tkinter as tk
 from tkinter import *
 from tkinter import filedialog
 
-import algorithms
-
 machine = algorithms.ElGamalMachine()
 
 root = Tk()
@@ -12,16 +10,25 @@ root.geometry("1000x800")
 root.title("Encryption")
 
 key_size_option = [64, 128, 256, 512, 1024]
-  
-def upload_file(event=None):
-    filename = filedialog.askopenfile()
-    print('selected:', filename)
-    print(filename.readlines())
     
-def save_file():
-    file = filedialog.asksaveasfile(initialfile = 'Untitled.txt', defaultextension=".txt", filetypes=[("All Files","*.*"),("Text Documents","*.txt")])
-    print('selected:', file)
-      
+def upload_key1():
+    file = filedialog.askopenfile()
+    key_1.delete('1.0', END)
+    key_1.insert(END, file.read())
+    
+def save_key1():
+    file = filedialog.asksaveasfile(initialfile = 'privatekey.pri', defaultextension=".pri", filetypes=[("All Files","*.*"),("Private Key","*.pri")])
+    file.write(key_1.get("1.0", "end-1c"))
+    
+def upload_key2():
+    file = filedialog.askopenfile()
+    key_2.delete('1.0', END)
+    key_2.insert(END, file.read())
+    
+def save_key2():
+    file = filedialog.asksaveasfile(initialfile = 'publickey.pub', defaultextension=".pub", filetypes=[("All Files","*.*"),("Public Key","*.pub")])
+    file.write(key_2.get("1.0", "end-1c"))
+
 def generate_key():
     pub_key, pri_key = machine.create_key(int(key_size.get()))
 
@@ -54,6 +61,25 @@ def decrypt():
 
     plaintext.delete('1.0', END)
     plaintext.insert(END, decrypted)
+    
+
+def sign(filename, signature):
+    with open(filename, 'a') as file:
+        file.write("\n\n<ds>")
+        file.write(signature)
+        file.write("<\ds>")
+
+
+def verify(filename, signature):
+    with open(filename) as file:
+        f = file.read()
+        loc_start = f.find("<ds>") + 4
+        loc_end = f.find("<\ds>")
+
+        found_signature = f[loc_start:loc_end]
+
+        return found_signature == signature
+
       
 main_title = Label(text = "ElGamal Encryption")
 
@@ -62,26 +88,39 @@ key_size_dropdown = OptionMenu(root, key_size, *key_size_option)
 
 generate_key_button = Button(root, height = 2, width = 60, text ="Generate Key", command = lambda: generate_key())
 
-key_1 = Text(root, height = 5, width = 60)
-key_2 = Text(root, height = 5, width = 60)
 
-crypt_title = Label(text = "EnDeCrypt", pady=20)
+key1_title = Label(text = "Private Key", pady=10)
+key1_open = Button(root, text="Open Key", command=upload_key1)
+key1_save = Button(root, text= "Save Key", command=lambda:save_key1())
+key_1 = Text(root, height = 4, width = 60)
 
-plaintext = Text(root, height = 5, width = 60)
+key2_title = Label(text = "Public Key", pady=10)
+key2_open = Button(root, text="Open Key", command=upload_key2)
+key2_save = Button(root, text= "Save Key", command=lambda:save_key2())
+key_2 = Text(root, height = 4, width = 60)
+
+crypt_title = Label(text = "EnDeCrypt", pady=10)
+
+plaintext = Text(root, height = 4, width = 60)
 encrypt_button = Button(root, height = 2, width = 60, text ="Encrypt!", command = lambda: encrypt())
 
-ciphertext = Text(root, height = 5, width = 60)
+ciphertext = Text(root, height = 4, width = 60)
 decrypt_button = Button(root, height = 2, width = 60, text ="Decrypt!", command = lambda: decrypt())
 
-open = Button(root, text='Open File', command=upload_file)
-save= Button(root, text= "Save", command= lambda:save_file())
   
 main_title.pack()
 
 key_size_dropdown.pack()
 generate_key_button.pack()
 
+key1_title.pack()
+key1_open.pack()
+key1_save.pack()
 key_1.pack()
+
+key2_title.pack()
+key2_open.pack()
+key2_save.pack()
 key_2.pack()
 
 crypt_title.pack()
@@ -91,9 +130,6 @@ encrypt_button.pack()
 
 ciphertext.pack()
 decrypt_button.pack()
-
-open.pack()
-save.pack()
 
 
 mainloop()
